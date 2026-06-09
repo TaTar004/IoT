@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Farm Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-deep:    #05101f;
+      --bg-card:    #0b1c32;
+      --bg-panel:   #0e2240;
+      --border:     rgba(30, 90, 180, 0.25);
+      --border-hi:  rgba(30, 130, 220, 0.55);
+      --blue:       #1976D2;
+      --blue-light: #42A5F5;
+      --blue-glow:  rgba(25, 118, 210, 0.18);
+      --white:      #EBF3FF;
+      --muted:      #7ca0c8;
+      --faint:      #3a5a80;
+      --green:      #22c55e;
+      --red:        #ef4444;
+      --amber:      #f59e0b;
+      --font:       'Inter', sans-serif;
+      --radius-sm:  8px;
+      --radius-md:  12px;
+      --radius-lg:  16px;
+    }
+
+    html, body {
+      min-height: 100vh;
+      background: var(--bg-deep);
+      font-family: var(--font);
+      color: var(--white);
+    }
+
+    /* ── Layout ── */
+    .page { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+    /* ── Header ── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2.5rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 0.5px solid var(--border);
+    }
+    .header-left { display: flex; align-items: center; gap: 14px; }
+    .logo-box {
+      width: 44px; height: 44px;
+      background: var(--blue);
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .logo-box svg { width: 22px; height: 22px; stroke: white; fill: none; stroke-width: 1.8; }
+    .header-title { font-size: 20px; font-weight: 600; color: var(--white); }
+    .header-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .header-right { display: flex; align-items: center; gap: 16px; }
+    .online-pill {
+      display: flex; align-items: center; gap: 7px;
+      background: rgba(34,197,94,0.1);
+      border: 0.5px solid rgba(34,197,94,0.35);
+      padding: 5px 12px; border-radius: 20px;
+      font-size: 12px; color: #4ade80;
+    }
+    .online-dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+    .refresh-btn {
+      display: flex; align-items: center; gap: 6px;
+      background: transparent;
+      border: 0.5px solid var(--border-hi);
+      color: var(--blue-light);
+      padding: 7px 14px; border-radius: var(--radius-sm);
+      font-size: 12px; font-family: var(--font);
+      cursor: pointer; transition: .2s;
+    }
+    .refresh-btn:hover { background: var(--blue-glow); }
+    .refresh-btn:active { transform: scale(0.97); }
+    .refresh-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+    /* ── Section label ── */
+    .section-label {
+      font-size: 11px; font-weight: 500; letter-spacing: 0.09em;
+      text-transform: uppercase; color: var(--faint);
+      margin-bottom: 12px;
+    }
+
+    /* ── Sensor Grid ── */
+    .sensor-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 2rem;
+    }
+    @media (max-width: 700px) { .sensor-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 420px) { .sensor-grid { grid-template-columns: 1fr; } }
+
+    .sensor-card {
+      background: var(--bg-card);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.1rem;
+      transition: border-color .2s;
+    }
+    .sensor-card:hover { border-color: var(--border-hi); }
+    .sensor-icon {
+      width: 34px; height: 34px;
+      background: var(--blue-glow);
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 10px;
+    }
+    .sensor-icon svg { width: 18px; height: 18px; stroke: var(--blue-light); fill: none; stroke-width: 1.8; }
+    .sensor-val-row { display: flex; align-items: baseline; gap: 4px; }
+    .sensor-val { font-size: 26px; font-weight: 600; color: var(--white); }
+    .sensor-unit { font-size: 13px; color: var(--muted); }
+    .sensor-name { font-size: 12px; color: var(--muted); margin-top: 6px; }
+    .bar-wrap { margin-top: 10px; background: rgba(255,255,255,0.06); border-radius: 4px; height: 3px; overflow: hidden; }
+    .bar-fill { height: 3px; border-radius: 4px; background: linear-gradient(90deg, var(--blue) 0%, var(--blue-light) 100%); transition: width .5s ease; }
+
+    /* ── Divider ── */
+    .divider { border: none; border-top: 0.5px solid var(--border); margin: 1.75rem 0; }
+
+    /* ── LED Grid ── */
+    .led-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 2rem;
+    }
+    @media (max-width: 500px) { .led-grid { grid-template-columns: 1fr; } }
+
+    .led-card {
+      background: var(--bg-card);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1.1rem 1.25rem;
+      transition: border-color .2s;
+    }
+    .led-card.active { border-color: var(--blue); }
+    .led-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
+    .led-icon-name { display: flex; align-items: center; gap: 10px; }
+    .led-icon {
+      width: 36px; height: 36px;
+      background: var(--bg-panel);
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      transition: background .3s;
+    }
+    .led-icon svg { width: 18px; height: 18px; stroke: var(--faint); fill: none; stroke-width: 1.8; transition: stroke .3s; }
+    .led-card.active .led-icon { background: rgba(25,118,210,0.15); }
+    .led-card.active .led-icon svg { stroke: var(--blue-light); }
+    .led-name { font-size: 14px; font-weight: 500; color: var(--white); }
+    .led-pin { font-size: 11px; color: var(--faint); margin-top: 3px; }
+    /* Toggle switch */
+    .toggle { position: relative; width: 52px; height: 28px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-track {
+      position: absolute; inset: 0;
+      background: var(--bg-panel);
+      border: 0.5px solid var(--border);
+      border-radius: 28px;
+      cursor: pointer;
+      transition: background .3s, border-color .3s;
+    }
+    .toggle-track::before {
+      content: '';
+      position: absolute;
+      width: 22px; height: 22px;
+      top: 3px; left: 3px;
+      background: var(--faint);
+      border-radius: 50%;
+      transition: transform .3s, background .3s;
+    }
+    .toggle input:checked + .toggle-track { background: var(--blue); border-color: var(--blue); }
+    .toggle input:checked + .toggle-track::before { transform: translateX(24px); background: white; }
+    .led-footer { display: flex; align-items: center; gap: 8px; }
+    .status-badge {
+      font-size: 11px; font-weight: 500;
+      padding: 3px 10px; border-radius: 20px;
+      transition: .3s;
+    }
+    .badge-off { background: rgba(255,255,255,0.05); color: var(--faint); border: 0.5px solid var(--border); }
+    .badge-on  { background: rgba(25,118,210,0.18); color: var(--blue-light); border: 0.5px solid rgba(66,165,245,0.4); }
+
+    /* ── Pump Grid ── */
+    .pump-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 2rem;
+    }
+    @media (max-width: 500px) { .pump-grid { grid-template-columns: 1fr; } }
+
+    .pump-card {
+      background: var(--bg-card);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1.1rem 1.25rem;
+    }
+    .pump-top { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+    .pump-icon {
+      width: 34px; height: 34px;
+      background: var(--blue-glow);
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .pump-icon svg { width: 18px; height: 18px; stroke: var(--blue-light); fill: none; stroke-width: 1.8; }
+    .pump-name { font-size: 14px; font-weight: 500; color: var(--white); }
+    .pump-pin { font-size: 11px; color: var(--faint); margin-top: 3px; }
+    .pump-slider-row { display: flex; align-items: center; gap: 12px; margin: 14px 0 14px; }
+    input[type=range] {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 4px;
+      background: var(--bg-panel);
+      border-radius: 4px;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: var(--blue);
+      border: 2px solid var(--blue-light);
+      cursor: pointer;
+    }
+    input[type=range]::-moz-range-thumb {
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: var(--blue);
+      border: 2px solid var(--blue-light);
+      cursor: pointer;
+    }
+    .pump-val {
+      font-size: 15px; font-weight: 600;
+      color: var(--blue-light);
+      min-width: 38px; text-align: right;
+    }
+    .pump-send-btn {
+      width: 100%;
+      padding: 9px;
+      background: transparent;
+      border: 0.5px solid var(--blue);
+      border-radius: var(--radius-sm);
+      color: var(--blue-light);
+      font-size: 13px; font-family: var(--font);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      transition: .2s;
+    }
+    .pump-send-btn:hover { background: var(--blue-glow); border-color: var(--blue-light); }
+    .pump-send-btn:active { transform: scale(0.98); }
+    .pump-send-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px;
+      background: var(--bg-panel);
+      border: 0.5px solid var(--border-hi);
+      color: var(--white);
+      padding: 11px 18px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      opacity: 0; transform: translateY(8px);
+      transition: opacity .3s, transform .3s;
+      pointer-events: none;
+      z-index: 999;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; flex-shrink: 0; }
+    .toast.ok svg { stroke: #22c55e; }
+    .toast.err svg { stroke: #ef4444; }
+
+    /* ── Loading overlay ── */
+    .loading-ring {
+      width: 14px; height: 14px;
+      border: 2px solid transparent;
+      border-top-color: var(--blue-light);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .refresh-btn.loading .loading-ring { display: block; }
+    .refresh-btn.loading .btn-icon { display: none; }
+
+    /* ── Footer ── */
+    .footer {
+      margin-top: 3rem;
+      text-align: center;
+      font-size: 11px;
+      color: var(--faint);
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo-box">
+        <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 3.5-2.5 6.5-6 7.4V20h-2v-3.6C7.5 15.5 5 12.5 5 9a7 7 0 0 1 7-7z"/><path d="M9 21h6"/></svg>
+      </div>
+      <div>
+        <div class="header-title">Smart Farm Dashboard</div>
+        <div class="header-sub">TMPL6RU4IQKBL &nbsp;·&nbsp; Blynk IoT Platform</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="online-pill">
+        <span class="online-dot"></span>Online
+      </div>
+      <button class="refresh-btn" id="refreshBtn" onclick="fetchAllSensors()">
+        <svg class="btn-icon" viewBox="0 0 24 24"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+        <div class="loading-ring"></div>
+        รีเฟรชข้อมูล
+      </button>
+    </div>
+  </header>
+
+  <!-- Sensors -->
+  <div class="section-label">เซนเซอร์วัดค่า</div>
+  <div class="sensor-grid">
+
+    <div class="sensor-card">
+      <div class="sensor-icon">
+        <svg viewBox="0 0 24 24"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
+      </div>
+      <div class="sensor-val-row">
+        <span class="sensor-val" id="v_temp">—</span>
+        <span class="sensor-unit">°C</span>
+      </div>
+      <div class="sensor-name">อุณหภูมิ</div>
+      <div class="bar-wrap"><div class="bar-fill" id="bar_temp" style="width:0%"></div></div>
+    </div>
+
+    <div class="sensor-card">
+      <div class="sensor-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+      </div>
+      <div class="sensor-val-row">
+        <span class="sensor-val" id="v_hum">—</span>
+        <span class="sensor-unit">%</span>
+      </div>
+      <div class="sensor-name">ความชื้นอากาศ</div>
+      <div class="bar-wrap"><div class="bar-fill" id="bar_hum" style="width:0%"></div></div>
+    </div>
+
+    <div class="sensor-card">
+      <div class="sensor-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 22V12"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/><circle cx="12" cy="5" r="3"/></svg>
+      </div>
+      <div class="sensor-val-row">
+        <span class="sensor-val" id="v_soil">—</span>
+        <span class="sensor-unit">%</span>
+      </div>
+      <div class="sensor-name">ความชื้นดิน</div>
+      <div class="bar-wrap"><div class="bar-fill" id="bar_soil" style="width:0%"></div></div>
+    </div>
+
+    <div class="sensor-card">
+      <div class="sensor-icon">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      </div>
+      <div class="sensor-val-row">
+        <span class="sensor-val" id="v_light">—</span>
+        <span class="sensor-unit">lux</span>
+      </div>
+      <div class="sensor-name">แสง</div>
+      <div class="bar-wrap"><div class="bar-fill" id="bar_light" style="width:0%"></div></div>
+    </div>
+
+  </div>
+
+  <hr class="divider">
+
+  <!-- LEDs -->
+  <div class="section-label">ไฟ LED</div>
+  <div class="led-grid">
+
+    <div class="led-card" id="card_led1">
+      <div class="led-top">
+        <div class="led-icon-name">
+          <div class="led-icon">
+            <svg viewBox="0 0 24 24"><path d="M9 18h6M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg>
+          </div>
+          <div>
+            <div class="led-name">LED 1</div>
+            <div class="led-pin">Virtual Pin V0</div>
+          </div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="led1" onchange="toggleLED(0, this)">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+      <div class="led-footer">
+        <span class="status-badge badge-off" id="badge_led1">ปิดอยู่</span>
+      </div>
+    </div>
+
+    <div class="led-card" id="card_led2">
+      <div class="led-top">
+        <div class="led-icon-name">
+          <div class="led-icon">
+            <svg viewBox="0 0 24 24"><path d="M9 18h6M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg>
+          </div>
+          <div>
+            <div class="led-name">LED 2</div>
+            <div class="led-pin">Virtual Pin V1</div>
+          </div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="led2" onchange="toggleLED(1, this)">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+      <div class="led-footer">
+        <span class="status-badge badge-off" id="badge_led2">ปิดอยู่</span>
+      </div>
+    </div>
+
+  </div>
+
+  <hr class="divider">
+
+  <!-- Pumps -->
+  <div class="section-label">ปั๊มน้ำ</div>
+  <div class="pump-grid">
+
+    <div class="pump-card">
+      <div class="pump-top">
+        <div class="pump-icon">
+          <svg viewBox="0 0 24 24"><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z"/><path d="M8 7V5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M12 12v3"/><path d="M9 12h6"/></svg>
+        </div>
+        <div>
+          <div class="pump-name">ปั๊มน้ำ 1</div>
+          <div class="pump-pin">Virtual Pin V2</div>
+        </div>
+      </div>
+      <div class="pump-slider-row">
+        <input type="range" min="0" max="100" value="10" step="1" id="pump1"
+          oninput="document.getElementById('pv1').textContent=this.value+'%'">
+        <span class="pump-val" id="pv1">10%</span>
+      </div>
+      <button class="pump-send-btn" onclick="sendPump(2,'pump1')">
+        <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        ส่งค่าไป Blynk
+      </button>
+    </div>
+
+    <div class="pump-card">
+      <div class="pump-top">
+        <div class="pump-icon">
+          <svg viewBox="0 0 24 24"><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z"/><path d="M8 7V5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M12 12v3"/><path d="M9 12h6"/></svg>
+        </div>
+        <div>
+          <div class="pump-name">ปั๊มน้ำ 2</div>
+          <div class="pump-pin">Virtual Pin V3</div>
+        </div>
+      </div>
+      <div class="pump-slider-row">
+        <input type="range" min="0" max="100" value="20" step="1" id="pump2"
+          oninput="document.getElementById('pv2').textContent=this.value+'%'">
+        <span class="pump-val" id="pv2">20%</span>
+      </div>
+      <button class="pump-send-btn" onclick="sendPump(3,'pump2')">
+        <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        ส่งค่าไป Blynk
+      </button>
+    </div>
+
+  </div>
+
+  <div class="footer">Smart Farm · Blynk IoT · TMPL6RU4IQKBL</div>
+</div>
+
+<!-- Toast -->
+<div class="toast ok" id="toast">
+  <svg id="toast-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+  <span id="toast-msg">สำเร็จ</span>
+</div>
+
+<script>
+  const TOKEN = "wp51mFbze7fXxiGhoi3D99CB7FIBWefi";
+  const BASE   = "https://blynk.cloud/external/api";
+
+  /* ── Toast ── */
+  let toastTimer;
+  function showToast(msg, ok = true) {
+    clearTimeout(toastTimer);
+    const el = document.getElementById('toast');
+    const icon = document.getElementById('toast-icon');
+    document.getElementById('toast-msg').textContent = msg;
+    el.className = 'toast ' + (ok ? 'ok' : 'err');
+    icon.innerHTML = ok
+      ? '<polyline points="20 6 9 17 4 12"/>'
+      : '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>';
+    el.classList.add('show');
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+  }
+
+  /* ── Blynk helpers ── */
+  async function blynkUpdate(pin, val) {
+    try {
+      const r = await fetch(`${BASE}/update?token=${TOKEN}&${pin}=${val}`);
+      return r.ok;
+    } catch { return false; }
+  }
+
+  async function blynkGet(pin) {
+    try {
+      const r = await fetch(`${BASE}/get?token=${TOKEN}&${pin}`);
+      if (!r.ok) return null;
+      const txt = await r.text();
+      const v = parseFloat(txt.replace(/[\[\]"\s]/g, ''));
+      return isNaN(v) ? null : v;
+    } catch { return null; }
+  }
+
+  /* ── LED ── */
+  async function toggleLED(pin, el) {
+    const val = el.checked ? 1 : 0;
+    const idx  = pin + 1;
+    const badge = document.getElementById(`badge_led${idx}`);
+    const card  = document.getElementById(`card_led${idx}`);
+    const ok = await blynkUpdate('V' + pin, val);
+    if (ok) {
+      badge.textContent  = val ? 'เปิดอยู่' : 'ปิดอยู่';
+      badge.className    = 'status-badge ' + (val ? 'badge-on' : 'badge-off');
+      card.classList.toggle('active', !!val);
+      showToast(`LED ${idx} ${val ? 'เปิด' : 'ปิด'} แล้ว`);
+    } else {
+      el.checked = !el.checked;
+      showToast('ไม่สามารถเชื่อมต่อ Blynk ได้', false);
+    }
+  }
+
+  /* ── Pump ── */
+  async function sendPump(pin, sliderId) {
+    const val = document.getElementById(sliderId).value;
+    const ok  = await blynkUpdate('V' + pin, val);
+    if (ok) showToast(`ปั๊มน้ำ ${pin - 1} ตั้งค่า ${val}% สำเร็จ`);
+    else    showToast('ไม่สามารถเชื่อมต่อ Blynk ได้', false);
+  }
+
+  /* ── Sensors ── */
+  function setSensor(valId, barId, val, max) {
+    if (val === null) return;
+    document.getElementById(valId).textContent = Math.round(val * 10) / 10;
+    const pct = Math.min(100, Math.max(0, (val / max) * 100));
+    document.getElementById(barId).style.width = pct + '%';
+  }
+
+  async function fetchAllSensors() {
+    const btn = document.getElementById('refreshBtn');
+    btn.classList.add('loading');
+    const [temp, hum, soil, light] = await Promise.all([
+      blynkGet('V4'), blynkGet('V5'), blynkGet('V6'), blynkGet('V7')
+    ]);
+    setSensor('v_temp',  'bar_temp',  temp,  50);
+    setSensor('v_hum',   'bar_hum',   hum,   100);
+    setSensor('v_soil',  'bar_soil',  soil,  100);
+    setSensor('v_light', 'bar_light', light, 1000);
+    btn.classList.remove('loading');
+    showToast('อัปเดตข้อมูลเซนเซอร์แล้ว');
+  }
+
+  /* init */
+  fetchAllSensors();
+</script>
+</body>
+</html>
