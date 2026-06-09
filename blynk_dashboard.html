@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blynk Dashboard</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0a0f1e;
+    --surface:   #111827;
+    --surface2:  #1a2236;
+    --border:    rgba(99,179,237,0.15);
+    --border2:   rgba(99,179,237,0.30);
+    --blue:      #1d6fd8;
+    --blue-lt:   #4da3ff;
+    --white:     #f0f6ff;
+    --muted:     #7a90b0;
+    --success:   #22c55e;
+    --danger:    #ef4444;
+    --warning:   #f59e0b;
+    --radius:    12px;
+    --radius-sm: 8px;
+    --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--white);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* ── Top bar ── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 32px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(8px);
+  }
+  .topbar-logo {
+    width: 38px; height: 38px;
+    border-radius: var(--radius-sm);
+    background: var(--blue);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .topbar-logo svg { display: block; }
+  .topbar-title { font-size: 18px; font-weight: 600; color: var(--white); }
+  .topbar-sub   { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .conn-badge {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--success);
+    background: rgba(34,197,94,0.1);
+    border: 1px solid rgba(34,197,94,0.25);
+    border-radius: 20px;
+    padding: 4px 12px;
+  }
+  .conn-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--success);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+
+  .refresh-btn {
+    display: flex; align-items: center; gap: 6px;
+    background: transparent;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    color: var(--muted);
+    font-size: 13px;
+    font-family: var(--font);
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+  }
+  .refresh-btn:hover { color: var(--white); border-color: var(--blue-lt); background: rgba(29,111,216,0.1); }
+  .spin { animation: spinning 0.9s linear infinite; }
+  @keyframes spinning { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+  /* ── Main layout ── */
+  .main { padding: 28px 32px; max-width: 1100px; margin: 0 auto; position: relative; z-index: 1; }
+  .footer { position: relative; z-index: 1; }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 20px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px; }
+
+  /* ── Card ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    transition: border-color 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--blue), transparent);
+    opacity: 0.5;
+  }
+  .card:hover { border-color: var(--border2); }
+
+  .card-label {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+  .card-label i { font-size: 15px; color: var(--blue-lt); }
+
+  /* ── Toggle ── */
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; }
+  .toggle-val { font-size: 26px; font-weight: 700; color: var(--white); line-height: 1; }
+  .toggle-state { font-size: 12px; color: var(--muted); margin-top: 5px; display: flex; align-items: center; gap: 5px; }
+  .state-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
+  .state-dot.on { background: var(--success); }
+
+  .switch { position: relative; width: 58px; height: 30px; cursor: pointer; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .switch-slider {
+    position: absolute; inset: 0; border-radius: 30px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    transition: background 0.25s, border-color 0.25s;
+  }
+  .switch-slider::before {
+    content: '';
+    position: absolute;
+    width: 22px; height: 22px;
+    left: 3px; top: 3px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: transform 0.25s, background 0.25s;
+  }
+  input:checked + .switch-slider { background: var(--blue); border-color: var(--blue); }
+  input:checked + .switch-slider::before { transform: translateX(28px); background: #fff; }
+
+  /* ── Slider ── */
+  .range-wrap { margin-top: 4px; }
+  .range-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+  .range-num { font-size: 28px; font-weight: 700; color: var(--white); }
+  .range-max { font-size: 12px; color: var(--muted); }
+  input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%; height: 6px;
+    background: var(--surface2);
+    border-radius: 6px;
+    outline: none;
+    border: 1px solid var(--border);
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--blue-lt);
+    border: 3px solid var(--bg);
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+  input[type=range]::-moz-range-thumb {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--blue-lt);
+    border: 3px solid var(--bg);
+    cursor: pointer;
+  }
+  .range-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+  /* ── LED ── */
+  .led-body { display: flex; align-items: center; gap: 18px; }
+  .led-orb {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: #1a2236;
+    border: 2px solid #2a3a5a;
+    flex-shrink: 0;
+    transition: background 0.4s, box-shadow 0.4s, border-color 0.4s;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .led-orb.on {
+    background: rgba(34,197,94,0.2);
+    border-color: var(--success);
+    box-shadow: 0 0 18px rgba(34,197,94,0.5), inset 0 0 10px rgba(34,197,94,0.15);
+    color: var(--success);
+  }
+  .led-orb.off { color: var(--muted); }
+  .led-label { font-size: 17px; font-weight: 600; color: var(--white); }
+  .led-sub   { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+  /* ── Gauge ── */
+  .gauge-area { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .gauge-svg-wrap { width: 140px; height: 78px; overflow: hidden; }
+  .gauge-val { font-size: 28px; font-weight: 700; color: var(--white); text-align: center; }
+  .gauge-unit { font-size: 12px; color: var(--muted); text-align: center; }
+  .gauge-bar { display: flex; align-items: center; gap: 6px; margin-top: 6px; width: 100%; }
+  .gauge-low  { font-size: 11px; color: var(--blue-lt); }
+  .gauge-high { font-size: 11px; color: var(--danger); }
+  .gauge-track {
+    flex: 1; height: 4px; border-radius: 4px;
+    background: linear-gradient(90deg, var(--blue-lt), var(--warning), var(--danger));
+    position: relative;
+  }
+  .gauge-thumb {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 10px; height: 10px; border-radius: 50%;
+    background: white;
+    border: 2px solid var(--bg);
+    transition: left 0.4s;
+  }
+
+  /* ── Label box ── */
+  .label-display {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--white);
+    word-break: break-all;
+    min-height: 52px;
+    display: flex; align-items: center;
+    margin-top: 2px;
+    letter-spacing: 0.02em;
+  }
+  .label-meta { font-size: 11px; color: var(--muted); margin-top: 8px; }
+
+  /* ── Buttons ── */
+  .btn-row { display: flex; gap: 8px; margin-top: 14px; }
+  .btn {
+    flex: 1;
+    padding: 9px 0;
+    border-radius: var(--radius-sm);
+    font-size: 13px; font-weight: 500;
+    font-family: var(--font);
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+  }
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border2);
+    color: var(--muted);
+  }
+  .btn-outline:hover { border-color: var(--blue-lt); color: var(--blue-lt); background: rgba(29,111,216,0.08); }
+  .btn-primary {
+    background: var(--blue);
+    border: 1px solid var(--blue);
+    color: white;
+  }
+  .btn-primary:hover { background: #1a5fbc; }
+  .btn-danger {
+    background: transparent;
+    border: 1px solid rgba(239,68,68,0.35);
+    color: var(--danger);
+  }
+  .btn-danger:hover { background: rgba(239,68,68,0.1); border-color: var(--danger); }
+  .btn:active { transform: scale(0.97); }
+
+  /* ── Send bar ── */
+  .send-bar { display: flex; gap: 8px; margin-top: 12px; }
+  .send-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--white);
+    font-size: 14px;
+    font-family: var(--font);
+    padding: 8px 12px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .send-input:focus { border-color: var(--blue); }
+  .send-input::placeholder { color: var(--muted); }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    padding: 10px 18px 10px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 13px; font-weight: 500;
+    background: var(--surface);
+    color: var(--white);
+    border-left: 3px solid var(--blue);
+    border-top: 1px solid var(--border2);
+    border-right: 1px solid var(--border2);
+    border-bottom: 1px solid var(--border2);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+    z-index: 9999;
+    max-width: 300px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.ok   { border-left-color: var(--success); }
+  .toast.fail { border-left-color: var(--danger); }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    padding: 24px 32px;
+    font-size: 12px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    margin-top: 8px;
+  }
+
+  @media (max-width: 600px) {
+    .topbar { padding: 14px 16px; }
+    .main   { padding: 20px 16px; }
+    .topbar-sub, .conn-badge span { display: none; }
+  }
+</style>
+</head>
+<body>
+<canvas id="particleCanvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;"></canvas>
+
+<!-- ── Top bar ── -->
+<header class="topbar">
+  <div class="topbar-logo">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+    </svg>
+  </div>
+  <div>
+    <div class="topbar-title">Blynk Dashboard</div>
+    <div class="topbar-sub">ควบคุมอุปกรณ์ IoT ผ่าน HTTP API</div>
+  </div>
+  <div class="topbar-right">
+    <div class="conn-badge">
+      <span class="conn-dot" id="connDot"></span>
+      <span id="connLabel">เชื่อมต่ออยู่</span>
+    </div>
+    <button class="refresh-btn" onclick="refreshAll()">
+      <i class="ti ti-refresh" id="refIcon"></i> รีเฟรช
+    </button>
+  </div>
+</header>
+
+<!-- ── Main ── -->
+<main class="main">
+
+  <p class="section-title"><i class="ti ti-adjustments-horizontal" style="font-size:14px;color:#4da3ff"></i> การควบคุม</p>
+
+  <div class="grid-2">
+
+    <!-- Card: Toggle V0 -->
+    <div class="card">
+      <div class="card-label"><i class="ti ti-power"></i> ปุ่มปิด/เปิด &nbsp;<span style="color:#3a4a6a;font-size:10px">V0</span></div>
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="toggle-val" id="toggleVal">—</div>
+          <div class="toggle-state">
+            <span class="state-dot" id="stateDot"></span>
+            <span id="toggleState">กำลังโหลด...</span>
+          </div>
+        </div>
+        <label class="switch" aria-label="ปิด/เปิดอุปกรณ์">
+          <input type="checkbox" id="toggleChk" onchange="sendToggle(this.checked)">
+          <span class="switch-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Card: Slider V2 -->
+    <div class="card">
+      <div class="card-label"><i class="ti ti-brightness-half"></i> ปรับค่าแสง &nbsp;<span style="color:#3a4a6a;font-size:10px">V2</span></div>
+      <div class="range-wrap">
+        <div class="range-header">
+          <span class="range-num" id="lightVal">—</span>
+          <span class="range-max">/ 255</span>
+        </div>
+        <input type="range" min="0" max="255" value="128" step="1" id="lightSlider"
+               oninput="updateSliderUI(this.value)"
+               onchange="sendSlider(this.value)">
+        <div class="range-labels"><span>0</span><span>127</span><span>255</span></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-outline" onclick="sendSlider(document.getElementById('lightSlider').value)">
+          <i class="ti ti-send"></i> ส่งค่าแสง
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="section-title"><i class="ti ti-activity" style="font-size:14px;color:#4da3ff"></i> สถานะและตัวชี้วัด</p>
+
+  <div class="grid-3">
+
+    <!-- Card: LED V1 -->
+    <div class="card">
+      <div class="card-label"><i class="ti ti-circle-dot"></i> สถานะการทำงาน &nbsp;<span style="color:#3a4a6a;font-size:10px">V1</span></div>
+      <div class="led-body">
+        <div class="led-orb off" id="ledOrb">
+          <i class="ti ti-bulb" id="ledIcon"></i>
+        </div>
+        <div>
+          <div class="led-label" id="ledLabel">ไม่ทราบ</div>
+          <div class="led-sub">LED · Pin V1</div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-outline" onclick="setLed(1)"><i class="ti ti-bulb"></i> เปิด LED</button>
+        <button class="btn btn-danger"  onclick="setLed(0)"><i class="ti ti-bulb-off"></i> ปิด LED</button>
+      </div>
+    </div>
+
+    <!-- Card: Gauge V3 -->
+    <div class="card">
+      <div class="card-label"><i class="ti ti-temperature"></i> ค่าอุณหภูมิ &nbsp;<span style="color:#3a4a6a;font-size:10px">V3</span></div>
+      <div class="gauge-area">
+        <div class="gauge-svg-wrap">
+          <svg width="140" height="140" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12,70 A58,58 0 0,1 128,70" fill="none" stroke="#1a2236" stroke-width="12" stroke-linecap="round"/>
+            <path id="gaugeArc" d="M12,70 A58,58 0 0,1 128,70"
+                  fill="none" stroke="#1d6fd8" stroke-width="12" stroke-linecap="round"
+                  stroke-dasharray="182" stroke-dashoffset="182"/>
+          </svg>
+        </div>
+        <div class="gauge-val" id="gaugeVal">—</div>
+        <div class="gauge-unit">องศาเซลเซียส (°C)</div>
+        <div class="gauge-bar">
+          <span class="gauge-low">เย็น</span>
+          <div class="gauge-track"><div class="gauge-thumb" id="gaugeThumb" style="left:0%"></div></div>
+          <span class="gauge-high">ร้อน</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card: Label V4 -->
+    <div class="card">
+      <div class="card-label"><i class="ti ti-message-circle"></i> การตอบกลับ &nbsp;<span style="color:#3a4a6a;font-size:10px">V4</span></div>
+      <div class="label-display" id="labelBox">กำลังโหลด...</div>
+      <div class="label-meta" id="labelMeta">V4 · อัปเดตล่าสุด: —</div>
+      <div class="send-bar">
+        <input type="text" class="send-input" id="labelInput" placeholder="พิมพ์ข้อความส่งไปยัง V4..." maxlength="60">
+        <button class="btn btn-primary" style="flex:0;padding:8px 16px" onclick="sendLabel()">
+          <i class="ti ti-send"></i>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- API Info -->
+  <p class="section-title"><i class="ti ti-api" style="font-size:14px;color:#4da3ff"></i> ข้อมูล API</p>
+  <div class="card" style="padding:16px 20px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px">
+      <div>
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Token</div>
+        <div style="font-size:12px;font-family:monospace;color:#4da3ff;word-break:break-all">Xvo2yx8n...A24y</div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Endpoint</div>
+        <div style="font-size:12px;font-family:monospace;color:#4da3ff">blynk.cloud/external/api</div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">รีเฟรชอัตโนมัติ</div>
+        <div style="font-size:13px;color:var(--white)">ทุก 10 วินาที</div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Pin map</div>
+        <div style="font-size:12px;color:var(--white)">V0 · V1 · V2 · V3 · V4</div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer class="footer">
+  Blynk IoT Dashboard &nbsp;·&nbsp; HTTP API Integration &nbsp;·&nbsp; Auto-refresh every 10s
+</footer>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <i class="ti ti-circle-check" id="toastIcon"></i>
+  <span id="toastMsg">สำเร็จ</span>
+</div>
+
+<script>
+  const TOKEN = 'Xvo2yx8nWY2PB2BCEuiKOsyi4WGhA24y';
+  const BASE  = 'https://blynk.cloud/external/api';
+
+  // ── Toast ──────────────────────────────────────────────
+  let toastTimer;
+  function showToast(msg, ok = true) {
+    const el   = document.getElementById('toast');
+    const icon = document.getElementById('toastIcon');
+    document.getElementById('toastMsg').textContent = msg;
+    el.className = 'toast show ' + (ok ? 'ok' : 'fail');
+    icon.className = ok ? 'ti ti-circle-check' : 'ti ti-circle-x';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+  }
+
+  // ── API helpers ─────────────────────────────────────────
+  async function blynkGet(pin) {
+    try {
+      const r = await fetch(`${BASE}/get?token=${TOKEN}&${pin}`);
+      if (!r.ok) throw new Error(r.status);
+      return (await r.text()).trim();
+    } catch { return null; }
+  }
+
+  async function blynkUpdate(pin, val) {
+    try {
+      const r = await fetch(`${BASE}/update?token=${TOKEN}&${pin}=${encodeURIComponent(val)}`);
+      return r.ok;
+    } catch { return false; }
+  }
+
+  // ── Gauge helpers ───────────────────────────────────────
+  function updateGauge(val, min = 0, max = 100) {
+    const pct = Math.min(Math.max((val - min) / (max - min), 0), 1);
+    const arc = document.getElementById('gaugeArc');
+    const thumb = document.getElementById('gaugeThumb');
+    const len = 182;
+    arc.setAttribute('stroke-dashoffset', len - pct * len);
+    const col = pct > 0.7 ? '#ef4444' : pct > 0.45 ? '#f59e0b' : '#1d6fd8';
+    arc.setAttribute('stroke', col);
+    thumb.style.left = (pct * 88) + '%';
+  }
+
+  // ── Load functions ──────────────────────────────────────
+  async function loadToggle() {
+    const v = await blynkGet('V0');
+    if (v === null) return;
+    const on = parseInt(v) === 1;
+    document.getElementById('toggleChk').checked = on;
+    document.getElementById('toggleVal').textContent = on ? 'เปิด' : 'ปิด';
+    document.getElementById('toggleState').textContent = on ? 'กำลังทำงาน' : 'หยุดทำงาน';
+    const dot = document.getElementById('stateDot');
+    dot.className = 'state-dot' + (on ? ' on' : '');
+  }
+
+  async function loadSlider() {
+    const v = await blynkGet('V2');
+    if (v === null) return;
+    const n = Math.round(parseFloat(v));
+    document.getElementById('lightSlider').value = n;
+    document.getElementById('lightVal').textContent = n;
+    updateSliderTrack(n);
+  }
+
+  async function loadLed() {
+    const v = await blynkGet('V1');
+    const on = v !== null && parseFloat(v) > 0;
+    const orb  = document.getElementById('ledOrb');
+    const lbl  = document.getElementById('ledLabel');
+    orb.className = 'led-orb ' + (on ? 'on' : 'off');
+    lbl.textContent = on ? 'เปิดอยู่' : 'ปิดอยู่';
+  }
+
+  async function loadGauge() {
+    const v = await blynkGet('V3');
+    if (v === null) return;
+    const n = parseFloat(v);
+    document.getElementById('gaugeVal').textContent = Math.round(n) + ' °C';
+    updateGauge(n);
+  }
+
+  async function loadLabel() {
+    const v = await blynkGet('V4');
+    if (v === null) return;
+    document.getElementById('labelBox').textContent = v || '(ว่าง)';
+    document.getElementById('labelMeta').textContent =
+      'V4 · อัปเดตล่าสุด: ' + new Date().toLocaleTimeString('th-TH');
+  }
+
+  // ── Send functions ──────────────────────────────────────
+  async function sendToggle(checked) {
+    const on = checked;
+    document.getElementById('toggleVal').textContent = on ? 'เปิด' : 'ปิด';
+    document.getElementById('toggleState').textContent = on ? 'กำลังทำงาน' : 'หยุดทำงาน';
+    document.getElementById('stateDot').className = 'state-dot' + (on ? ' on' : '');
+    const ok = await blynkUpdate('V0', on ? 1 : 0);
+    showToast(ok ? `${on ? 'เปิด' : 'ปิด'}อุปกรณ์สำเร็จ` : 'ส่งคำสั่งไม่สำเร็จ', ok);
+  }
+
+  function updateSliderUI(v) {
+    document.getElementById('lightVal').textContent = v;
+    updateSliderTrack(v);
+  }
+
+  function updateSliderTrack(v) {
+    const pct = (v / 255) * 100;
+    const s = document.getElementById('lightSlider');
+    s.style.background = `linear-gradient(90deg, #4da3ff ${pct}%, #1a2236 ${pct}%)`;
+  }
+
+  async function sendSlider(v) {
+    const ok = await blynkUpdate('V2', Math.round(v));
+    showToast(ok ? `ตั้งค่าแสงเป็น ${Math.round(v)} สำเร็จ` : 'ส่งคำสั่งไม่สำเร็จ', ok);
+  }
+
+  async function setLed(val) {
+    const ok = await blynkUpdate('V1', val);
+    if (ok) {
+      const on = val === 1;
+      document.getElementById('ledOrb').className = 'led-orb ' + (on ? 'on' : 'off');
+      document.getElementById('ledLabel').textContent = on ? 'เปิดอยู่' : 'ปิดอยู่';
+      showToast(`${on ? 'เปิด' : 'ปิด'} LED สำเร็จ`);
+    } else {
+      showToast('ส่งคำสั่งไม่สำเร็จ', false);
+    }
+  }
+
+  async function sendLabel() {
+    const txt = document.getElementById('labelInput').value.trim();
+    if (!txt) { showToast('กรุณาพิมพ์ข้อความก่อน', false); return; }
+    const ok = await blynkUpdate('V4', txt);
+    if (ok) {
+      document.getElementById('labelBox').textContent = txt;
+      document.getElementById('labelInput').value = '';
+      document.getElementById('labelMeta').textContent =
+        'V4 · อัปเดตล่าสุด: ' + new Date().toLocaleTimeString('th-TH');
+      showToast('ส่งข้อความสำเร็จ');
+    } else {
+      showToast('ส่งข้อความไม่สำเร็จ', false);
+    }
+  }
+
+  // Enter key for label send
+  document.getElementById('labelInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') sendLabel();
+  });
+
+  // ── Refresh all ─────────────────────────────────────────
+  async function refreshAll() {
+    const icon = document.getElementById('refIcon');
+    icon.classList.add('spin');
+    await Promise.all([loadToggle(), loadSlider(), loadLed(), loadGauge(), loadLabel()]);
+    icon.classList.remove('spin');
+    showToast('อัปเดตข้อมูลสำเร็จ');
+  }
+
+  // ── Init & auto-refresh ──────────────────────────────────
+  updateSliderTrack(128);
+  refreshAll();
+  setInterval(() => {
+    loadGauge();
+    loadLed();
+    loadLabel();
+  }, 10000);
+
+  // ── Particle System ─────────────────────────────────────
+  (function(){
+    const canvas = document.getElementById('particleCanvas');
+    const ctx = canvas.getContext('2d');
+    let W, H, particles = [], lines = [];
+
+    function resize() {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    const COLORS = ['#1d6fd8','#4da3ff','#63b3ed','#93c5fd','#1e3a5f'];
+    const COUNT  = Math.min(Math.floor(W * H / 14000), 90);
+
+    function rand(a, b) { return a + Math.random() * (b - a); }
+
+    function mkParticle() {
+      const r = rand(1.2, 3.2);
+      return {
+        x: rand(0, W), y: rand(0, H),
+        vx: rand(-0.3, 0.3), vy: rand(-0.25, 0.25),
+        r,
+        color: COLORS[Math.floor(Math.random() * COLORS.length)],
+        alpha: rand(0.3, 0.85),
+        pulse: rand(0, Math.PI * 2),
+        pulseSpeed: rand(0.008, 0.022),
+        glow: Math.random() < 0.18
+      };
+    }
+
+    for (let i = 0; i < COUNT; i++) particles.push(mkParticle());
+
+    // Occasional shooting-star lines
+    function mkLine() {
+      const y = rand(0, H * 0.6);
+      return {
+        x: -60, y,
+        len: rand(60, 140),
+        speed: rand(2.5, 5),
+        alpha: rand(0.3, 0.6),
+        life: 1
+      };
+    }
+    setInterval(() => {
+      if (lines.length < 4 && Math.random() < 0.5) lines.push(mkLine());
+    }, 1800);
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+
+      // faint grid
+      ctx.strokeStyle = 'rgba(29,111,216,0.04)';
+      ctx.lineWidth = 0.5;
+      const gapX = 80, gapY = 80;
+      for (let x = 0; x < W; x += gapX) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+      for (let y = 0; y < H; y += gapY) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+      // connection lines between nearby particles
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const dist = Math.sqrt(dx*dx + dy*dy);
+          if (dist < 130) {
+            const alpha = (1 - dist / 130) * 0.18;
+            ctx.strokeStyle = `rgba(77,163,255,${alpha})`;
+            ctx.lineWidth = 0.6;
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      // particles
+      for (const p of particles) {
+        p.pulse += p.pulseSpeed;
+        const a = p.alpha * (0.75 + 0.25 * Math.sin(p.pulse));
+        if (p.glow) {
+          const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 5);
+          g.addColorStop(0, p.color.replace(')', `,${a})`).replace('rgb','rgba'));
+          g.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.r * 5, 0, Math.PI*2);
+          ctx.fillStyle = g; ctx.fill();
+        }
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = p.color + Math.round(a * 255).toString(16).padStart(2,'0');
+        ctx.fill();
+
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < -10) p.x = W + 10;
+        if (p.x > W + 10) p.x = -10;
+        if (p.y < -10) p.y = H + 10;
+        if (p.y > H + 10) p.y = -10;
+      }
+
+      // shooting stars
+      for (let i = lines.length - 1; i >= 0; i--) {
+        const l = lines[i];
+        const grad = ctx.createLinearGradient(l.x, l.y, l.x + l.len, l.y);
+        grad.addColorStop(0, `rgba(77,163,255,0)`);
+        grad.addColorStop(0.5, `rgba(77,163,255,${l.alpha * l.life})`);
+        grad.addColorStop(1, `rgba(255,255,255,${l.alpha * l.life * 0.6})`);
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(l.x, l.y);
+        ctx.lineTo(l.x + l.len, l.y);
+        ctx.stroke();
+        l.x += l.speed;
+        l.life -= 0.012;
+        if (l.x > W + 200 || l.life <= 0) lines.splice(i, 1);
+      }
+
+      requestAnimationFrame(draw);
+    }
+    draw();
+  })();
+</script>
+</body>
+</html>
